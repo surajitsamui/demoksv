@@ -1,0 +1,19 @@
+<input id="message" placeholder="Ask something..." />
+<button onclick="sendMessage()">Send</button>
+
+<div id="response"></div>
+
+<script>
+    async function sendMessage() {
+
+        const message = document.getElementById("message").value;
+
+        const response = await fetch(
+            "http://localhost:8085/api/chat?message=" + encodeURIComponent(message)
+        );
+
+        const answer = await response.text();
+
+        document.getElementById("response").innerText = answer;
+    }
+</script>

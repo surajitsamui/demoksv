@@ -1,29 +1,20 @@
 package org.example.demoksv.config;
 
-import org.example.demoksv.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-
+import static org.springframework.security.config.Customizer.withDefaults;
 
 @Configuration
+@EnableWebSecurity
 public class SecurityConfig {
-
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
-
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
-        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
-    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http)
@@ -40,114 +31,57 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
 
-                        // LOGIN - PUBLIC
-                        .requestMatchers("/auth/**").permitAll()
-                        // SWAGGER - PUBLIC
+                        // Swagger - PUBLIC
                         .requestMatchers(
                                 "/swagger-ui.html",
-                                "/index.html",
                                 "/swagger-ui/**",
+                                "/v3/api-docs/**",
                                 "/api-docs/**"
                         ).permitAll()
 
-                        // EMPLOYEES
-                        .requestMatchers(HttpMethod.GET, "/employees/**")
-                        .hasAnyRole("USER", "ADMIN")
+                        // Employee GET - authenticated
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/employees/**"
+                        ).authenticated()
 
-                        .requestMatchers("/employees/**")
-                        .hasRole("ADMIN")
+                        // Employee POST/PUT/DELETE - authenticated
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/employees/**"
+                        ).authenticated()
 
-                        .requestMatchers(HttpMethod.GET, "/api/**")
-                        .hasAnyRole("USER", "ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/kafka/**")
-                        .hasAnyRole("USER", "ADMIN")
+                        .requestMatchers(
+                                HttpMethod.PUT,
+                                "/employees/**"
+                        ).authenticated()
 
+                        .requestMatchers(
+                                HttpMethod.DELETE,
+                                "/employees/**"
+                        ).authenticated()
+
+                        // Kafka GET - authenticated
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/kafka/**"
+                        ).authenticated()
+
+                        // Everything else
                         .anyRequest().authenticated()
                 )
 
-                .addFilterBefore(
-                        jwtAuthenticationFilter,
-                        UsernamePasswordAuthenticationFilter.class
+                // Keycloak JWT
+                .oauth2ResourceServer(oauth2 ->
+                        oauth2.jwt(withDefaults())
                 );
 
         return http.build();
     }
 
+    // Required by DataInitializer
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-
-    @Bean
-    public AuthenticationManager authenticationManager(
-            AuthenticationConfiguration configuration)
-            throws Exception {
-
-        return configuration.getAuthenticationManager();
-    }
 }
-
-
-//@Configuration
-//@EnableWebSecurity
-//public class SecurityConfig {
-//
-//    private final JwtAuthenticationFilter jwtAuthenticationFilter;
-//
-//    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
-//        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
-//    }
-//
-//    @Bean
-//    public SecurityFilterChain securityFilterChain(HttpSecurity http)
-//            throws Exception {
-//
-//        http
-//                // Important for REST/JWT
-//                .csrf(csrf -> csrf.disable())
-//
-//                .sessionManagement(session ->
-//                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-//                )
-//
-//                .authorizeHttpRequests(auth -> auth
-//
-//                        // Login MUST be public
-//                        .requestMatchers("/auth/login").permitAll()
-//
-//                        // Swagger
-//                        .requestMatchers(
-//                                "/swagger-ui.html",
-//                                "/swagger-ui/**",
-//                                "/api-docs/**"
-//                        ).permitAll()
-//
-//                        // Employee APIs
-//                        .requestMatchers(HttpMethod.GET, "/employees/**")
-//                        .hasAnyRole("USER", "ADMIN")
-//
-//                        .requestMatchers("/employees/**")
-//                        .hasRole("ADMIN")
-//
-//                        .anyRequest().authenticated()
-//                )
-//
-//                .addFilterBefore(
-//                        jwtAuthenticationFilter,
-//                        UsernamePasswordAuthenticationFilter.class
-//                );
-//
-//        return http.build();
-//    }
-//
-//    @Bean
-//    public PasswordEncoder passwordEncoder() {
-//        return new BCryptPasswordEncoder();
-//    }
-//
-//    @Bean
-//    public AuthenticationManager authenticationManager(
-//            AuthenticationConfiguration configuration) throws Exception {
-//        return configuration.getAuthenticationManager();
-//    }
-//}

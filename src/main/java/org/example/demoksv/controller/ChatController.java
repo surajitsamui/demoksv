@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/chat")
-@SecurityRequirement(name = "bearerAuth")
+@SecurityRequirement(name = "keycloak")
 public class ChatController {
 
     private final ChatClient chatClient;

@@ -9,10 +9,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-
 @RestController
 @RequestMapping("/employees")
-@SecurityRequirement(name = "bearerAuth")
+@SecurityRequirement(name = "keycloak")
 public class EmployeeController {
 
     private final EmployeeRepository employeeRepository;

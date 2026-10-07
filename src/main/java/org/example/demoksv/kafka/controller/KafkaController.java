@@ -9,7 +9,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/kafka")
-@SecurityRequirement(name = "bearerAuth")
+@SecurityRequirement(name = "keycloak")
 public class KafkaController {
 
     private final KafkaProducerService producerService;
